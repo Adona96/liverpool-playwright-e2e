@@ -40,6 +40,7 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
 
     // Find and fill search input
     const searchInput = page.locator('input[placeholder*="Buscar"], input[aria-label*="Buscar"], input[type="search"]').first();
+    await searchInput.waitFor({ state: 'visible', timeout: 30000 });
     await searchInput.fill(searchTerm);
 
     // Submit search and assert results load within 10 seconds
