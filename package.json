@@ -11,7 +11,7 @@
     "test:main":         "playwright test liverpool.spec --project=chromium",
     "test:main:headed":  "cross-env HEADLESS=false playwright test liverpool.spec --project=chromium",
     "test:a11y":         "playwright test liverpool.a11y --project=chromium",
-    "test:visual":       "playwright test liverpool.visual --project=chromium",
+    "test:visual":       "cross-env HEADLESS=false playwright test liverpool.visual --project=chromium",
     "test:ci":           "playwright test --project=firefox",
     "report":            "playwright show-report --port 9324"
   },

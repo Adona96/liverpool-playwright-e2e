@@ -5,6 +5,7 @@ test('Visual regression - search results page', async ({ page }) => {
   test.setTimeout(120_000);
 
   await page.goto('https://www.liverpool.com.mx/tienda');
+  await page.waitForLoadState('domcontentloaded');
 
   const acceptBtn = page.getByRole('button', { name: /aceptar|accept/i });
   if (await acceptBtn.count()) await acceptBtn.click().catch(() => {});

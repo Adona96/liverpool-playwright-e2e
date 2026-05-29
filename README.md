@@ -80,15 +80,23 @@ npm run report
 
 ## Regresión Visual
 
-La primera vez que corras el test visual necesitas generar el **baseline**:
+El test visual requiere browser visible (headed) ya que Liverpool detecta y bloquea Chromium en modo headless (protección Akamai/CDN). El script `test:visual` ya incluye esta configuración.
+
+Generar baseline (primera vez):
 
 ```bash
-npx playwright test liverpool.visual --project=chromium --update-snapshots
+npm run test:visual -- --update-snapshots
 ```
 
-Las ejecuciones siguientes comparan automáticamente contra ese baseline.
+Ejecutar comparación:
 
-> **Nota:** El test visual puede devolver "Access Denied" si Liverpool detecta múltiples peticiones automatizadas en poco tiempo (protección Akamai/CDN). En ese caso, espera unos minutos antes de reintentar o ejecútalo como parte del suite completo con `npm test`. En un entorno de staging sin bot-protection, este test funciona sin restricciones.
+```bash
+npm run test:visual
+```
+
+Las ejecuciones siguientes comparan contra el baseline guardado en `tests/liverpool.visual.spec.ts-snapshots/`. Si el layout de Liverpool cambia, el test falla y muestra el diff visual.
+
+> El test visual está deshabilitado en CI (`test.skip` cuando `CI=true`) ya que requiere browser visible. Commitea el baseline generado localmente para mantenerlo como referencia.
 
 ---
 
