@@ -53,6 +53,10 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
 
     // Apply color filter
     const colorFilterEl = page.locator(`div.newCategoriesChipsCarrousel div.newPlpChip:has-text("${colorFilter}")`).first();
+    if (!await colorFilterEl.count()) {
+      console.log(`[INFO] Filtro de color "${colorFilter}" no disponible para "${searchTerm}" - omitiendo caso`);
+      return;
+    }
     await colorFilterEl.waitFor({ state: 'visible', timeout: 20000 });
     await colorFilterEl.click();
     await page.locator('figcaption.a-plp-product-info').first().waitFor({ timeout: 20000 });

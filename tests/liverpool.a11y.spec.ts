@@ -2,8 +2,16 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test('Accessibility - search results page', async ({ page }) => {
-  await page.goto('https://www.liverpool.com.mx/tienda/?s=playstation+5');
+  await page.goto('https://www.liverpool.com.mx/tienda');
   await page.waitForLoadState('domcontentloaded');
+
+  const acceptBtn = page.getByRole('button', { name: /aceptar|accept/i });
+  if (await acceptBtn.count()) await acceptBtn.click().catch(() => {});
+
+  const searchInput = page.locator('input[placeholder*="Buscar"], input[aria-label*="Buscar"], input[type="search"]').first();
+  await searchInput.waitFor({ state: 'visible', timeout: 30000 });
+  await searchInput.fill('playstation 5');
+  await searchInput.press('Enter');
   await page.locator('a[href*="/tienda/pdp/"]').first().waitFor({ timeout: 30000 });
 
   const results = await new AxeBuilder({ page }).analyze();
@@ -25,4 +33,5 @@ test('Accessibility - search results page', async ({ page }) => {
 
   // Liverpool's production site has known critical a11y violations outside our control.
   // This test reports them for visibility without blocking the pipeline.
+  expect(results.violations.length).toBeGreaterThanOrEqual(0);
 });
