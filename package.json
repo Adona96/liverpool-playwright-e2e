@@ -1,0 +1,25 @@
+{
+  "name": "liverpool-playwright-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prepare":           "npx playwright install --with-deps",
+    "install-browsers":  "npx playwright install --with-deps",
+    "pretest":           "npm run install-browsers",
+    "test":              "playwright test",
+    "test:headed":       "cross-env HEADLESS=false playwright test",
+    "test:main":         "playwright test liverpool.spec",
+    "test:main:headed":  "cross-env HEADLESS=false playwright test liverpool.spec --project=chromium",
+    "test:a11y":         "playwright test liverpool.a11y",
+    "test:visual":       "playwright test liverpool.visual",
+    "test:ci":           "playwright test",
+    "report":            "playwright show-report --port 9324"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0",
+    "cross-env": "^7.0.3",
+    "typescript": "^5.0.0"
+  }
+}
