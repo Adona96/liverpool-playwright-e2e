@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test('Accessibility - search results page', async ({ page }) => {
@@ -31,7 +31,6 @@ test('Accessibility - search results page', async ({ page }) => {
     console.log(`  Referencia: ${v.helpUrl}`);
   });
 
-  // Liverpool's production site has known critical a11y violations outside our control.
-  // This test reports them for visibility without blocking the pipeline.
-  expect(results.violations.length).toBeGreaterThanOrEqual(0);
+  // Liverpool's production site has known accessibility violations outside our control.
+  // This test reports them for visibility — the scan result itself is the deliverable.
 });

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // ---------------------------------------------------------------------------
-// Test data — read from CSV so cases can be changed without touching test code
+// Test data - read from CSV so cases can be changed without touching test code
 // ---------------------------------------------------------------------------
 const csvPath = path.join(__dirname, '..', 'test-data', 'search-tests.csv');
 const testCases = fs
@@ -23,11 +23,12 @@ const SORT_MAP: Record<string, { datahref: string; label: string }> = {
 };
 
 // ---------------------------------------------------------------------------
-// Data-driven test — one test per CSV row
+// Data-driven test - one test per CSV row
 // ---------------------------------------------------------------------------
 testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
   test(`[${searchTerm}] filtro: ${colorFilter} | orden: ${sortOrder}`, async ({ page }) => {
     const sort = SORT_MAP[sortOrder];
+    // Pipe (|) is a regex alternation operator and must be escaped as literal character
     const sortUrlPattern = new RegExp('st=' + sort.datahref.replace(/\|/g, '\\|'));
 
     // Navigate
@@ -51,10 +52,10 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
     console.log(`[PERF] Resultados de busqueda cargados en ${searchLoadTime}ms`);
     expect(searchLoadTime, 'Search results must load in under 10 seconds').toBeLessThan(10_000);
 
-    // Apply color filter
+    // Apply color filter - some search terms may not have the requested color available
     const colorFilterEl = page.locator(`div.newCategoriesChipsCarrousel div.newPlpChip:has-text("${colorFilter}")`).first();
     if (!await colorFilterEl.count()) {
-      console.log(`[INFO] Filtro de color "${colorFilter}" no disponible para "${searchTerm}" - omitiendo caso`);
+      console.warn(`[SKIP] Filtro de color "${colorFilter}" no disponible para "${searchTerm}". Agrega una combinacion valida al CSV.`);
       return;
     }
     await colorFilterEl.waitFor({ state: 'visible', timeout: 20000 });
@@ -96,6 +97,7 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
             const description = card.querySelector('h3.a-card-description')?.textContent?.trim() ?? '';
             const name        = [brand, description].filter(Boolean).join(' - ');
 
+            // Liverpool wraps decimal cents in <sup> tags: "$449<sup>00</sup>" -> "$449.00"
             const toPrice = (el: Element | null): string => {
               if (!el) return '';
               const cents = (el.querySelector('sup')?.textContent ?? '').trim();
@@ -121,10 +123,10 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
       console.log(`${i + 1}. ${p.name} - ${priceMsg}`);
     });
 
-    // Get structured product data from window.dataLayer (populated by GTM on page load).
-    // Liverpool populates dataLayer with product impression data on every PLP render,
-    // making it the canonical structured source for cross-validation.
-    const apiProducts = await page.evaluate(() => {
+    // Get structured product data from window.dataLayer (Google Tag Manager).
+    // Liverpool pushes product impression data to GTM on every PLP render,
+    // making it the canonical structured source for cross-validation against UI.
+    const gtmProducts = await page.evaluate(() => {
       const dl = (window as any).dataLayer ?? [];
       const impressions: any[] = dl.flatMap((e: any) =>
         e?.ecommerce?.impressions ?? e?.ecommerce?.items ?? []
@@ -133,15 +135,17 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
         id:            String(p.id ?? ''),
         name:          String(p.name ?? '').trim().toLowerCase(),
         brand:         String(p.brand ?? '').trim().toLowerCase(),
-        price:         String(p.price ?? ''),
-        originalPrice: String(p.metric2 ?? p.price ?? ''),
+        price:         String(p.price ?? ''),        // selling price
+        originalPrice: String(p.metric2 ?? p.price ?? ''), // list price before discount
       }));
     });
 
-    console.log(`\n[API] Total productos en dataLayer: ${apiProducts.length}`);
+    console.log(`\n[GTM] Total productos en dataLayer: ${gtmProducts.length}`);
 
-    // Cross-validate UI results vs dataLayer
-    console.log('\n=== Validacion UI vs dataLayer ===');
+    // Cross-validate UI results vs GTM dataLayer.
+    // Threshold: at least 3 of 5 UI products must appear in the GTM response.
+    // Uses fuzzy matching (brand + significant words) to handle minor name differences.
+    console.log('\n=== Validacion UI vs GTM dataLayer ===');
     let matches = 0;
 
     uiProducts.forEach((uiProduct) => {
@@ -149,11 +153,11 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
       const uiDesc   = rest.join(' - ').toLowerCase();
       const uiBrandL = uiBrand.toLowerCase();
 
-      const match = apiProducts.find((ap: { name: string; brand: string; price: string; originalPrice: string }) => {
-        const brandOk = uiBrandL.includes(ap.brand) || ap.brand.includes(uiBrandL);
+      const match = gtmProducts.find((gp: { name: string; brand: string; price: string; originalPrice: string }) => {
+        const brandOk = uiBrandL.includes(gp.brand) || gp.brand.includes(uiBrandL);
         const nameOk  = uiDesc.split(' ')
           .filter((w: string) => w.length > 4)
-          .some((w: string) => ap.name.includes(w));
+          .some((w: string) => gp.name.includes(w));
         return brandOk && nameOk;
       });
 
@@ -166,7 +170,7 @@ testCases.forEach(({ searchTerm, colorFilter, sortOrder }) => {
         if (!priceOk) {
           console.log(`[DISCREPANCIA PRECIO] "${uiProduct.name}"`);
           console.log(`  UI:  original=${uiProduct.originalPrice} | final=${uiProduct.finalPrice}`);
-          console.log(`  API: original=$${match.originalPrice}   | final=$${match.price}`);
+          console.log(`  GTM: original=$${match.originalPrice}   | final=$${match.price}`);
         } else {
           console.log(`[OK] "${uiProduct.name}"`);
         }

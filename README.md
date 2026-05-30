@@ -127,6 +127,8 @@ Pasos:
 3. Ejecuta los tests en headless
 4. Sube el reporte HTML como artefacto descargable
 
+> **Browsers:** CI corre en **Firefox** (`npm run test:ci`). Los scripts locales corren en **Chromium** (`npm test`). Esta asimetría existe porque Akamai (CDN de Liverpool) bloquea Chromium headless en IPs de CI pero no en entornos locales. Firefox pasa sin restricciones en ambos entornos.
+
 ---
 
 ## Estructura del proyecto
@@ -137,10 +139,10 @@ liverpool-playwright-e2e/
 ├── test-data/
 │   └── search-tests.csv             # Casos de prueba data-driven
 ├── tests/
-│   ├── liverpool.spec.ts            # Test principal (E2E + validación)
+│   ├── liverpool.spec.ts            # Test principal (E2E + validación GTM)
 │   ├── liverpool.a11y.spec.ts       # Accesibilidad con axe-core
 │   ├── liverpool.visual.spec.ts     # Regresión visual
-│   └── liverpool.discovery.ts      # Historial investigación de red
+│   └── liverpool.discovery.ts      # Historial de investigación de red (no corre en suite)
 ├── playwright.config.ts             # Configuración Playwright
 ├── package.json                     # Scripts y dependencias
 ├── TEST_STRATEGY.md                 # Estrategia de pruebas
